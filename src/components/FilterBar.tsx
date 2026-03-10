@@ -1,10 +1,18 @@
 import { useState } from 'react';
 import styled from 'styled-components';
+import { List, AlertTriangle, XCircle, AlertCircle, Pencil, X, Plus } from 'lucide-react';
 import type { FilterType } from '../types/filters';
 import { BUILT_IN_FILTERS } from '../types/filters';
 import { useCustomFiltersStore } from '../stores/customFiltersStore';
 import { FilterManageModal } from './FilterManageModal';
 import type { CustomFilter } from '../types/filters';
+
+const ICON_MAP: Record<string, React.ReactNode> = {
+  'list': <List size={14} />,
+  'alert-triangle': <AlertTriangle size={14} />,
+  'x-circle': <XCircle size={14} />,
+  'alert-circle': <AlertCircle size={14} />,
+};
 
 const FilterBarContainer = styled.div`
   display: flex;
@@ -103,7 +111,8 @@ const FilterChip = styled.button.attrs<{ $active: boolean }>(({ theme, $active }
 `;
 
 const ChipIcon = styled.span`
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
+  display: inline-flex;
+  align-items: center;
   line-height: 1;
 `;
 
@@ -131,6 +140,9 @@ const AddFilterButton = styled.button`
   transition: all ${({ theme }) => theme.transitions.fast};
   white-space: nowrap;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
 
   &:hover {
     opacity: 0.9;
@@ -263,7 +275,7 @@ export const FilterBar = ({
               onClick={() => onFilterChange(option.id)}
               title={option.description}
             >
-              <ChipIcon>{option.icon}</ChipIcon>
+              <ChipIcon>{ICON_MAP[option.icon] ?? option.icon}</ChipIcon>
               <span>{option.label}</span>
               <ChipCount $active={activeFilter === option.id}>
                 {filterCounts[option.id] || 0}
@@ -290,13 +302,13 @@ export const FilterBar = ({
                   onClick={(e) => handleEditFilter(filter, e)}
                   title="Edit filter"
                 >
-                  ✏
+                  <Pencil size={12} />
                 </ActionButton>
                 <ActionButton
                   onClick={(e) => handleDeleteFilter(filter.id, e)}
                   title="Delete filter"
                 >
-                  ✕
+                  <X size={12} />
                 </ActionButton>
               </FilterActions>
             </CustomChipWrapper>
@@ -304,7 +316,7 @@ export const FilterBar = ({
         </FilterChipsContainer>
 
         <AddFilterButton onClick={handleAddFilter}>
-          + Add Filter
+          <Plus size={14} /> Add Filter
         </AddFilterButton>
       </FilterBarContainer>
 

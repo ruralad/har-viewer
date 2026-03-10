@@ -12,6 +12,7 @@ export const GlobalStyles = createGlobalStyle`
     font-size: 16px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
@@ -27,8 +28,8 @@ export const GlobalStyles = createGlobalStyle`
 
   /* Scrollbar Styles */
   ::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
+    width: 8px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
@@ -81,6 +82,7 @@ export const GlobalStyles = createGlobalStyle`
   /* Code and Pre */
   code, pre {
     font-family: ${({ theme }) => theme.typography.fontFamilyMono};
+    font-feature-settings: 'liga' 1, 'calt' 1;
   }
 
   code {

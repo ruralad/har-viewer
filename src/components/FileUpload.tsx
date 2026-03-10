@@ -1,5 +1,6 @@
 import { useState, useRef, type DragEvent, type ChangeEvent } from 'react';
 import styled from 'styled-components';
+import { FileUp } from 'lucide-react';
 import { useHAR } from '@contexts/HARContext';
 import { parseHARFile } from '@utils/harParser';
 
@@ -21,7 +22,6 @@ const UploadContainer = styled.div<{ $isDragging: boolean }>`
 `;
 
 const UploadIcon = styled.div`
-  font-size: 3rem;
   margin-bottom: ${({ theme }) => theme.spacing.md};
   color: ${({ theme }) => theme.colors.textMuted};
 `;
@@ -172,7 +172,7 @@ export const FileUpload = () => {
         onDrop={handleDrop}
         onClick={handleClick}
       >
-        <UploadIcon>📁</UploadIcon>
+        <UploadIcon><FileUp size={48} strokeWidth={1.5} /></UploadIcon>
         <UploadTitle>
           {isProcessing ? 'Processing...' : 'Drop HAR file here'}
         </UploadTitle>

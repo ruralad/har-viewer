@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import styled from 'styled-components';
+import { Table2, Activity, BarChart3 } from 'lucide-react';
 import { ThemeToggle } from '@components/ThemeToggle';
 import { FileUpload } from '@components/FileUpload';
 import { SummaryDashboard } from '@components/SummaryDashboard';
@@ -174,13 +175,13 @@ function App() {
               </FileInfo>
               <ViewToggle>
                 <ViewButton $active={viewMode === 'table'} onClick={handleViewTable}>
-                  📋 Table
+                  <Table2 size={14} /> Table
                 </ViewButton>
                 <ViewButton $active={viewMode === 'waterfall'} onClick={handleViewWaterfall}>
-                  🌊 Waterfall
+                  <Activity size={14} /> Waterfall
                 </ViewButton>
                 <ViewButton $active={viewMode === 'statistics'} onClick={handleViewStatistics}>
-                  📊 Statistics
+                  <BarChart3 size={14} /> Statistics
                 </ViewButton>
               </ViewToggle>
               <ClearButton onClick={clearHAR}>Clear</ClearButton>

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useEffect, lazy, Suspense } from 'react';
-import styled from 'styled-components';
+import styled, { useTheme } from 'styled-components';
 import { useHAR } from '@contexts/HARContext';
 import { WaterfallRow } from './WaterfallRow';
 
@@ -115,6 +115,7 @@ interface WaterfallChartProps {
 }
 
 export const WaterfallChart = ({ activeFilter, searchTerm }: WaterfallChartProps) => {
+  const theme = useTheme();
   const { entries, selectedEntry, selectEntry } = useHAR();
   const { filters: customFilters } = useCustomFiltersStore();
 
@@ -189,31 +190,31 @@ export const WaterfallChart = ({ activeFilter, searchTerm }: WaterfallChartProps
       </Body>
       <Legend>
         <LegendItem>
-          <LegendColor $color="#6c757d" />
+          <LegendColor $color={theme.colors.blocked} />
           Blocked
         </LegendItem>
         <LegendItem>
-          <LegendColor $color="#20c997" />
+          <LegendColor $color={theme.colors.dns} />
           DNS
         </LegendItem>
         <LegendItem>
-          <LegendColor $color="#fd7e14" />
+          <LegendColor $color={theme.colors.connect} />
           Connect
         </LegendItem>
         <LegendItem>
-          <LegendColor $color="#d63384" />
+          <LegendColor $color={theme.colors.ssl} />
           SSL
         </LegendItem>
         <LegendItem>
-          <LegendColor $color="#0dcaf0" />
+          <LegendColor $color={theme.colors.send} />
           Send
         </LegendItem>
         <LegendItem>
-          <LegendColor $color="#ffc107" />
+          <LegendColor $color={theme.colors.wait} />
           Wait
         </LegendItem>
         <LegendItem>
-          <LegendColor $color="#0d6efd" />
+          <LegendColor $color={theme.colors.receive} />
           Receive
         </LegendItem>
       </Legend>
