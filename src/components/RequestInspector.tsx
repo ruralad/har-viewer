@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
+import styled, { useTheme } from 'styled-components';
 import { X } from 'lucide-react';
 import { useHAR } from '@contexts/HARContext';
 import { formatBytes, formatDuration, formatTimestamp } from '@utils/harParser';
@@ -250,6 +250,7 @@ const TimingBarFill = styled.div<{ $width: number; $color: string }>`
 `;
 
 export const RequestInspector = () => {
+  const theme = useTheme();
   const { selectedEntry, selectEntry } = useHAR();
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [payloadSearchTerm, setPayloadSearchTerm] = useState('');
@@ -676,13 +677,13 @@ export const RequestInspector = () => {
   const renderTimingsTab = () => {
     const totalTime = selectedEntry.time;
     const timingData = [
-      { label: 'Blocked', value: timings.blocked ?? -1, color: '#6c757d' },
-      { label: 'DNS', value: timings.dns ?? -1, color: '#20c997' },
-      { label: 'Connect', value: timings.connect ?? -1, color: '#fd7e14' },
-      { label: 'SSL', value: timings.ssl ?? -1, color: '#d63384' },
-      { label: 'Send', value: timings.send, color: '#0dcaf0' },
-      { label: 'Wait', value: timings.wait, color: '#ffc107' },
-      { label: 'Receive', value: timings.receive, color: '#0d6efd' },
+      { label: 'Blocked', value: timings.blocked ?? -1, color: theme.colors.blocked },
+      { label: 'DNS', value: timings.dns ?? -1, color: theme.colors.dns },
+      { label: 'Connect', value: timings.connect ?? -1, color: theme.colors.connect },
+      { label: 'SSL', value: timings.ssl ?? -1, color: theme.colors.ssl },
+      { label: 'Send', value: timings.send, color: theme.colors.send },
+      { label: 'Wait', value: timings.wait, color: theme.colors.wait },
+      { label: 'Receive', value: timings.receive, color: theme.colors.receive },
     ].filter((timing) => timing.value >= 0);
 
     return (

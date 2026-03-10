@@ -32,25 +32,25 @@ export const BUILT_IN_FILTERS: FilterOption[] = [
     id: 'all',
     label: 'All Requests',
     description: 'Show all network requests',
-    icon: '📋',
+    icon: 'list',
   },
   {
     id: '4xx',
     label: '4xx Errors',
     description: 'Client errors (400-499)',
-    icon: '⚠️',
+    icon: 'alert-triangle',
   },
   {
     id: '5xx',
     label: '5xx Errors',
     description: 'Server errors (500-599)',
-    icon: '❌',
+    icon: 'x-circle',
   },
   {
     id: 'other-errors',
     label: 'Other Errors',
     description: 'Other failed requests',
-    icon: '🔴',
+    icon: 'alert-circle',
   },
 ];
 
