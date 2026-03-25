@@ -341,7 +341,11 @@ export const TableView = ({ activeFilter, searchTerm, searchScope }: TableViewPr
       leftPanel={tableContent}
       rightPanel={
         <Suspense fallback={<LoadingContainer>Loading details...</LoadingContainer>}>
-          <RequestInspector globalSearchTerm={searchTerm} globalSearchScope={searchScope} />
+          <RequestInspector
+            key={`${selectedEntry.index}:${searchScope}:${searchTerm}`}
+            globalSearchTerm={searchTerm}
+            globalSearchScope={searchScope}
+          />
         </Suspense>
       }
     />

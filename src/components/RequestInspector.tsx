@@ -3,6 +3,7 @@ import { useRef } from 'react';
 import styled, { useTheme } from 'styled-components';
 import { X } from 'lucide-react';
 import { useHAR } from '@contexts/HARContext';
+import type { EntryWithMetadata } from '@types';
 import { formatBytes, formatDuration, formatTimestamp } from '@utils/harParser';
 import { JsonViewer, JsonSearchBar } from './JsonViewer';
 import { StatusBadge } from './shared/StatusBadge';
@@ -256,6 +257,95 @@ interface RequestInspectorProps {
   globalSearchScope?: SearchScope;
 }
 
+function matchesText(value: string | null | undefined, searchTerm: string) {
+  if (!searchTerm) return false;
+  return (value ?? '').toLowerCase().includes(searchTerm.toLowerCase());
+}
+
+function getInitialActiveTab(
+  selectedEntry: EntryWithMetadata | null,
+  globalSearchTerm: string,
+  globalSearchScope: SearchScope
+): Tab {
+  if (!selectedEntry || !globalSearchTerm.trim()) {
+    return 'general';
+  }
+
+  const { request, response, timings } = selectedEntry;
+  const searchLower = globalSearchTerm.trim().toLowerCase();
+
+  const generalMatches = globalSearchScope === 'all' && [
+    request.url,
+    request.method,
+    request.httpVersion,
+    selectedEntry.serverIPAddress,
+    String(response.status),
+    response.statusText,
+    response.httpVersion,
+    response.content.mimeType,
+    formatTimestamp(selectedEntry.startedDateTime),
+    formatDuration(selectedEntry.time),
+    formatBytes(response.content.size),
+    response.content.compression && response.content.compression > 0
+      ? formatBytes(response.content.size + response.content.compression)
+      : '',
+  ].some((value) => matchesText(value, searchLower));
+
+  const headersMatches = globalSearchScope === 'all' && [...request.headers, ...response.headers].some((header) =>
+    matchesText(`${header.name} ${header.value}`, searchLower)
+  );
+
+  const cookiesMatches = globalSearchScope === 'all' && [...request.cookies, ...response.cookies].some((cookie) =>
+    matchesText(
+      [cookie.name, cookie.value, cookie.domain, cookie.path, cookie.expires].join(' '),
+      searchLower
+    )
+  );
+
+  const payloadMatches = request.postData
+    ? matchesText(
+        JSON.stringify({
+          mimeType: request.postData.mimeType,
+          text: request.postData.text,
+          params: request.postData.params,
+        }),
+        searchLower
+      )
+    : false;
+
+  const responseMatches = matchesText(
+    JSON.stringify({
+      mimeType: response.content.mimeType,
+      encoding: response.content.encoding,
+      text: response.content.text,
+    }),
+    searchLower
+  );
+
+  const timingsMatches = globalSearchScope === 'all' && matchesText(
+    JSON.stringify({
+      startedDateTime: selectedEntry.startedDateTime,
+      totalTime: selectedEntry.time,
+      timings,
+    }),
+    searchLower
+  );
+
+  if (globalSearchScope === 'payload-response') {
+    if (payloadMatches) return 'payload';
+    if (responseMatches) return 'response';
+    return 'general';
+  }
+
+  if (generalMatches) return 'general';
+  if (headersMatches) return 'headers';
+  if (cookiesMatches) return 'cookies';
+  if (payloadMatches) return 'payload';
+  if (responseMatches) return 'response';
+  if (timingsMatches) return 'timings';
+  return 'general';
+}
+
 export const RequestInspector = ({
   globalSearchTerm = '',
   globalSearchScope = 'payload-response',
@@ -263,21 +353,16 @@ export const RequestInspector = ({
   const theme = useTheme();
   const { selectedEntry, selectEntry } = useHAR();
   const contentRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState<Tab>('general');
-  const [payloadSearchTerm, setPayloadSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<Tab>(() =>
+    getInitialActiveTab(selectedEntry, globalSearchTerm, globalSearchScope)
+  );
+  const [payloadSearchTerm, setPayloadSearchTerm] = useState(globalSearchTerm);
   const [payloadMatchIndex, setPayloadMatchIndex] = useState(0);
-  const [responseSearchTerm, setResponseSearchTerm] = useState('');
+  const [responseSearchTerm, setResponseSearchTerm] = useState(globalSearchTerm);
   const [responseMatchIndex, setResponseMatchIndex] = useState(0);
-  const [headersSearchTerm, setHeadersSearchTerm] = useState('');
-
-  // Seed tab-level search/highlight state from the global HAR search.
-  useEffect(() => {
-    setPayloadSearchTerm(globalSearchTerm);
-    setPayloadMatchIndex(0);
-    setResponseSearchTerm(globalSearchTerm);
-    setResponseMatchIndex(0);
-    setHeadersSearchTerm(globalSearchScope === 'all' ? globalSearchTerm : '');
-  }, [globalSearchScope, globalSearchTerm, selectedEntry?.index]);
+  const [headersSearchTerm, setHeadersSearchTerm] = useState(
+    globalSearchScope === 'all' ? globalSearchTerm : ''
+  );
 
   const handleTabKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -297,115 +382,6 @@ export const RequestInspector = ({
   );
 
   const inspectorSearchTerm = globalSearchTerm.trim();
-  const requestForMatch = selectedEntry?.request;
-  const responseForMatch = selectedEntry?.response;
-  const timingsForMatch = selectedEntry?.timings;
-
-  const matchesText = useCallback((value: string | null | undefined, searchTerm: string) => {
-    if (!searchTerm) return false;
-    return (value ?? '').toLowerCase().includes(searchTerm.toLowerCase());
-  }, []);
-
-  useEffect(() => {
-    if (!selectedEntry || !requestForMatch || !responseForMatch || !timingsForMatch || !inspectorSearchTerm) {
-      return;
-    }
-
-    const searchLower = inspectorSearchTerm.toLowerCase();
-    const generalMatches = globalSearchScope === 'all' && [
-      requestForMatch.url,
-      requestForMatch.method,
-      requestForMatch.httpVersion,
-      selectedEntry.serverIPAddress,
-      String(responseForMatch.status),
-      responseForMatch.statusText,
-      responseForMatch.httpVersion,
-      responseForMatch.content.mimeType,
-      formatTimestamp(selectedEntry.startedDateTime),
-      formatDuration(selectedEntry.time),
-      formatBytes(responseForMatch.content.size),
-      responseForMatch.content.compression && responseForMatch.content.compression > 0
-        ? formatBytes(responseForMatch.content.size + responseForMatch.content.compression)
-        : '',
-    ].some((value) => matchesText(value, searchLower));
-
-    const headersMatches = globalSearchScope === 'all' && [...requestForMatch.headers, ...responseForMatch.headers].some((header) =>
-      matchesText(`${header.name} ${header.value}`, searchLower)
-    );
-
-    const cookiesMatches = globalSearchScope === 'all' && [...requestForMatch.cookies, ...responseForMatch.cookies].some((cookie) =>
-      matchesText(
-        [
-          cookie.name,
-          cookie.value,
-          cookie.domain,
-          cookie.path,
-          cookie.expires,
-        ].join(' '),
-        searchLower
-      )
-    );
-
-    const payloadMatches = requestForMatch.postData
-      ? matchesText(
-          JSON.stringify({
-            mimeType: requestForMatch.postData.mimeType,
-            text: requestForMatch.postData.text,
-            params: requestForMatch.postData.params,
-          }),
-          searchLower
-        )
-      : false;
-
-    const responseMatches = matchesText(
-      JSON.stringify({
-        mimeType: responseForMatch.content.mimeType,
-        encoding: responseForMatch.content.encoding,
-        text: responseForMatch.content.text,
-      }),
-      searchLower
-    );
-
-    const timingsMatches = globalSearchScope === 'all' && matchesText(
-      JSON.stringify({
-        startedDateTime: selectedEntry.startedDateTime,
-        totalTime: selectedEntry.time,
-        timings: timingsForMatch,
-      }),
-      searchLower
-    );
-
-    if (globalSearchScope === 'payload-response') {
-      if (payloadMatches) {
-        setActiveTab('payload');
-      } else if (responseMatches) {
-        setActiveTab('response');
-      }
-      return;
-    }
-
-    if (generalMatches) {
-      setActiveTab('general');
-    } else if (headersMatches) {
-      setActiveTab('headers');
-    } else if (cookiesMatches) {
-      setActiveTab('cookies');
-    } else if (payloadMatches) {
-      setActiveTab('payload');
-    } else if (responseMatches) {
-      setActiveTab('response');
-    } else if (timingsMatches) {
-      setActiveTab('timings');
-    }
-  }, [
-    globalSearchScope,
-    inspectorSearchTerm,
-    matchesText,
-    requestForMatch,
-    responseForMatch,
-    selectedEntry,
-    timingsForMatch,
-  ]);
 
   useEffect(() => {
     if (!contentRef.current || !inspectorSearchTerm) {
