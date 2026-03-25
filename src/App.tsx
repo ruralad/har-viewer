@@ -7,7 +7,9 @@ import { SummaryDashboard } from '@components/SummaryDashboard';
 import { WaterfallChart } from '@components/WaterfallChart';
 import { TableView } from '@components/TableView';
 import { FilterBar } from '@components/FilterBar';
+import { ToonExportModal } from '@components/ToonExportModal';
 import { useHAR } from '@contexts/HARContext';
+import { useToonExport } from '@hooks/useToonExport';
 import type { FilterType } from './types/filters';
 import { useCustomFiltersStore } from './stores/customFiltersStore';
 import { calculateFilterCounts } from './utils/filterUtils';
@@ -71,6 +73,23 @@ const ClearButton = styled.button`
     background-color: ${({ theme }) => theme.colors.hover};
     border-color: ${({ theme }) => theme.colors.error};
     color: ${({ theme }) => theme.colors.error};
+  }
+`;
+
+const ActionButton = styled.button`
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  background-color: ${({ theme }) => theme.colors.backgroundTertiary};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.text};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  cursor: pointer;
+  transition: all ${({ theme }) => theme.transitions.fast};
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.hover};
+    border-color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
@@ -152,6 +171,23 @@ function App() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const {
+    isOpen: isToonModalOpen,
+    openModal: openToonModal,
+    closeModal: closeToonModal,
+    retry: retryToonExport,
+    download: downloadToonExport,
+    status: toonExportStatus,
+    toonText,
+    error: toonExportError,
+    elapsedMs: toonElapsedMs,
+    lineCount: toonLineCount,
+    exportFileName,
+  } = useToonExport({
+    har,
+    fileName,
+    entriesCount: entries.length,
+  });
 
   const filterCounts = useMemo(() => {
     return calculateFilterCounts(entries, customFilters);
@@ -160,6 +196,10 @@ function App() {
   const handleViewTable = useCallback(() => setViewMode('table'), []);
   const handleViewWaterfall = useCallback(() => setViewMode('waterfall'), []);
   const handleViewStatistics = useCallback(() => setViewMode('statistics'), []);
+  const handleClearHAR = useCallback(() => {
+    closeToonModal();
+    clearHAR();
+  }, [clearHAR, closeToonModal]);
 
   return (
     <AppContainer>
@@ -184,7 +224,8 @@ function App() {
                   <BarChart3 size={14} /> Statistics
                 </ViewButton>
               </ViewToggle>
-              <ClearButton onClick={clearHAR}>Clear</ClearButton>
+              <ActionButton onClick={openToonModal}>Convert to TOON</ActionButton>
+              <ClearButton onClick={handleClearHAR}>Clear</ClearButton>
             </>
           )}
         </HeaderLeft>
@@ -220,6 +261,19 @@ function App() {
           </ContentContainer>
         )}
       </MainContent>
+      <ToonExportModal
+        isOpen={isToonModalOpen}
+        status={toonExportStatus}
+        sourceFileName={fileName}
+        exportFileName={exportFileName}
+        toonText={toonText}
+        error={toonExportError}
+        elapsedMs={toonElapsedMs}
+        lineCount={toonLineCount}
+        onClose={closeToonModal}
+        onRetry={retryToonExport}
+        onDownload={downloadToonExport}
+      />
     </AppContainer>
   );
 }
